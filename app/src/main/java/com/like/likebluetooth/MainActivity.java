@@ -5,6 +5,8 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -16,13 +18,19 @@ import android.os.Message;
 import android.util.Log;
 import android.widget.TextView;
 
+import com.like.likebluetooth.view.BluetoothDevicesAdapter;
 import com.like.likebluetooth.viewmodel.BluetoothModel;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     protected TextView text;
+    private RecyclerView rv;
+    private BluetoothDevicesAdapter mBluetoothDevicesAdapter;
+    private ArrayList<BluetoothDevice> mBluetoothDevices;
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
@@ -31,6 +39,11 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         text = findViewById(R.id.text);
+        rv = findViewById(R.id.rv);
+        rv.setLayoutManager(new LinearLayoutManager(this));
+        mBluetoothDevices = new ArrayList<>();
+        mBluetoothDevicesAdapter = new BluetoothDevicesAdapter(this, mBluetoothDevices);
+        rv.setAdapter(mBluetoothDevicesAdapter);
 
         //创建ViewModel
         ViewModelProvider.AndroidViewModelFactory androidViewModelFactory = new ViewModelProvider.AndroidViewModelFactory(getApplication());
@@ -44,10 +57,14 @@ public class MainActivity extends AppCompatActivity {
                     String msg = bluetoothDevice.getAddress() + " " + bluetoothDevice.getName();
                     Log.d("MainActivity", msg);
                     text.setText(msg);
+
                 } else {
                     Log.d("MainActivity", bluetoothDevice.getAddress());
                     text.setText(bluetoothDevice.getAddress());
                 }
+
+                mBluetoothDevices.add(bluetoothDevice);
+                mBluetoothDevicesAdapter.notifyDataSetChanged();
             }
         });
 
