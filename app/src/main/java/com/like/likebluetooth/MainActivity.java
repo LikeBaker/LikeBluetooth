@@ -3,14 +3,14 @@ package com.like.likebluetooth;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,18 +19,20 @@ import android.util.Log;
 import android.widget.TextView;
 
 import com.like.likebluetooth.view.BluetoothDevicesAdapter;
-import com.like.likebluetooth.viewmodel.BluetoothModel;
+import com.like.likebluetooth.viewmodel.BluetoothViewModel;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+
+    public static final String TAG = "_bluetooth";
 
     protected TextView text;
     private RecyclerView rv;
     private BluetoothDevicesAdapter mBluetoothDevicesAdapter;
     private ArrayList<BluetoothDevice> mBluetoothDevices;
+    private Bluetooth mBluetoothUtil;
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
@@ -47,13 +49,13 @@ public class MainActivity extends AppCompatActivity {
 
         //创建ViewModel
         ViewModelProvider.AndroidViewModelFactory androidViewModelFactory = new ViewModelProvider.AndroidViewModelFactory(getApplication());
-        BluetoothModel bluetoothModel = androidViewModelFactory.create(BluetoothModel.class);
+        BluetoothViewModel bluetoothModel = androidViewModelFactory.create(BluetoothViewModel.class);
 //        bluetoothModel.getBraceletLiveData().setValue();
         bluetoothModel.getBraceletLiveData().observe(this, new Observer<BluetoothDevice>() {
             @Override
             public void onChanged(BluetoothDevice bluetoothDevice) {
                 //新增的bluetoothDevice
-                if (bluetoothDevice.getName() != null){
+                if (bluetoothDevice.getName() != null) {
                     String msg = bluetoothDevice.getAddress() + " " + bluetoothDevice.getName();
                     Log.d("MainActivity", msg);
                     text.setText(msg);
@@ -63,17 +65,34 @@ public class MainActivity extends AppCompatActivity {
                     text.setText(bluetoothDevice.getAddress());
                 }
 
-                mBluetoothDevices.add(bluetoothDevice);
-                mBluetoothDevicesAdapter.notifyDataSetChanged();
+                if (!mBluetoothDevices.contains(bluetoothDevice)) {
+
+                    mBluetoothDevices.add(bluetoothDevice);
+                    mBluetoothDevicesAdapter.notifyDataSetChanged();
+                } else {
+                    Log.d("MainActivity", "already have");
+                }
             }
         });
 
-        Bluetooth bluetoothUtil = new BluetoothImpl(this, new LikeHandler(this), bluetoothModel);
-        bluetoothUtil.scan();
+        MutableLiveData<BluetoothGatt> braceletGatt = bluetoothModel.getBraceletGatt();
+        braceletGatt.observe(this, new Observer<BluetoothGatt>() {
+            @Override
+            public void onChanged(BluetoothGatt bluetoothGatt) {
+                Log.d(TAG, "gatt changes");
+            }
+        });
+
+        mBluetoothUtil = new BluetoothImpl(this, new LikeHandler(this), bluetoothModel);
+        mBluetoothUtil.scan();
 
     }
 
-    private static class LikeHandler extends Handler{
+    public void connectDevice(BluetoothDevice bluetoothDevice){
+        mBluetoothUtil.connectDevice(bluetoothDevice);
+    }
+
+    private static class LikeHandler extends Handler {
         WeakReference<MainActivity> mActivity;
 
         public LikeHandler(MainActivity activity) {

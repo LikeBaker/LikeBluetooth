@@ -1,6 +1,7 @@
 package com.like.likebluetooth.view;
 
 import android.bluetooth.BluetoothDevice;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.like.likebluetooth.MainActivity;
 import com.like.likebluetooth.R;
+import com.like.likebluetooth.info.BluetoothDeviceInfoActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +38,7 @@ public class BluetoothDevicesAdapter extends RecyclerView.Adapter {
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, final int position) {
         ViewHolder vh = (ViewHolder) holder;
         BluetoothDevice bluetoothDevice = mList.get(position);
         if (bluetoothDevice.getName() != null) {
@@ -46,6 +48,14 @@ public class BluetoothDevicesAdapter extends RecyclerView.Adapter {
         }
 
         vh.address.setText(bluetoothDevice.getAddress());
+
+        vh.name.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mActivity.connectDevice(mList.get(position));
+                mActivity.startActivity(new Intent(mActivity, BluetoothDeviceInfoActivity.class));
+            }
+        });
     }
 
     @Override

@@ -1,6 +1,5 @@
 package com.like.likebluetooth;
 
-import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -12,17 +11,17 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
+import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
-import com.like.likebluetooth.viewmodel.BluetoothModel;
+import com.like.likebluetooth.viewmodel.BluetoothViewModel;
 
 import java.util.List;
 
 import static android.bluetooth.BluetoothProfile.STATE_CONNECTED;
+import static com.like.likebluetooth.MainActivity.TAG;
 
 /**
  * Created by like on 2020/9/16.
@@ -33,25 +32,25 @@ public class BluetoothImpl implements Bluetooth {
     private final Context mContext;
     private final BluetoothAdapter mBluetoothAdapter;
     private final BluetoothLeScanner mBluetoothLeScanner;
-    private final BluetoothModel mViewModel;
+    private final BluetoothViewModel mBluetoothDeviceModel;
     private ScanCallback mScanCallback;
     private BluetoothGattCallback mBluetoothGattCallback;
     private Handler mDataHandler;
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)//todo
-    public BluetoothImpl(Context context, Handler handler, BluetoothModel bluetoothModel) {
+    public BluetoothImpl(Context context, Handler handler, BluetoothViewModel bluetoothModel) {
         this.mContext = context;
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         mBluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
         mDataHandler = handler;
-        this.mViewModel = bluetoothModel;
+        this.mBluetoothDeviceModel = bluetoothModel;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void scan() {
         if (mScanCallback == null) {
-            mScanCallback = new ScanCallBack(mDataHandler, mViewModel);
+            mScanCallback = new ScanCallBack(mDataHandler, mBluetoothDeviceModel);
         }
 
         mBluetoothLeScanner.startScan(mScanCallback);
@@ -71,9 +70,10 @@ public class BluetoothImpl implements Bluetooth {
     public void connectDevice(BluetoothDevice bluetoothDevice) {
         //todo 从优化角度考虑，context如何选择
         if (mBluetoothGattCallback == null) {
-            mBluetoothGattCallback = new BluetoothGattCallBack();
+            mBluetoothGattCallback = new BluetoothGattCallBack(mBluetoothDeviceModel);
         }
 
+        Log.d(TAG, "connectGatt");
         bluetoothDevice.connectGatt(mContext, false, mBluetoothGattCallback);
     }
 
@@ -111,14 +111,14 @@ public class BluetoothImpl implements Bluetooth {
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 class ScanCallBack extends ScanCallback {
 
-    private BluetoothModel mViewModel;
+    private BluetoothViewModel mViewModel;
     private Handler mHandler;
 
     public ScanCallBack(Handler mHandler) {
         this.mHandler = mHandler;
     }
 
-    public ScanCallBack(Handler mDataHandler, BluetoothModel mViewModel) {
+    public ScanCallBack(Handler mDataHandler, BluetoothViewModel mViewModel) {
         this.mViewModel = mViewModel;
         this.mHandler = mDataHandler;
     }
@@ -149,9 +149,17 @@ class ScanCallBack extends ScanCallback {
 }
 
 class BluetoothGattCallBack extends BluetoothGattCallback {
+    private final BluetoothViewModel mBluetoothDeviceModel;
+
+    public BluetoothGattCallBack(BluetoothViewModel bluetoothDeviceModel) {
+        this.mBluetoothDeviceModel = bluetoothDeviceModel;
+    }
+
     @Override
     public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
         super.onConnectionStateChange(gatt, status, newState);
+
+        Log.d("BluetoothGattCallBack", "onConnectionStateChange");
 
         if (newState == STATE_CONNECTED) {
             gatt.discoverServices();
@@ -162,7 +170,12 @@ class BluetoothGattCallBack extends BluetoothGattCallback {
     public void onServicesDiscovered(BluetoothGatt gatt, int status) {
         super.onServicesDiscovered(gatt, status);
 
-        List<BluetoothGattService> services = gatt.getServices();
+        Log.d("BluetoothGattCallBack", "onServicesDiscovered");
+
+//        List<BluetoothGattService> services = gatt.getServices();
+//            mBluetoothDeviceModel.getBraceletGatt().setValue(gatt);//报错Cannot invoke setValue on a background thread
+            Log.d(TAG, "post value");
+            mBluetoothDeviceModel.getBraceletGatt().postValue(gatt);
 
     }
 
