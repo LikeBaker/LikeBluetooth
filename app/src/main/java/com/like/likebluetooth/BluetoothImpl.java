@@ -37,6 +37,11 @@ public class BluetoothImpl implements Bluetooth {
     private BluetoothGattCallback mBluetoothGattCallback;
     private Handler mDataHandler;
 
+    /**
+     * 是否为搜索状态
+     */
+    private boolean isScan;
+
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)//todo
     public BluetoothImpl(Context context, Handler handler, BluetoothViewModel bluetoothModel) {
         this.mContext = context;
@@ -54,6 +59,7 @@ public class BluetoothImpl implements Bluetooth {
         }
 
         mBluetoothLeScanner.startScan(mScanCallback);
+        isScan = true;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -64,6 +70,7 @@ public class BluetoothImpl implements Bluetooth {
         }
 
         mBluetoothLeScanner.stopScan(mScanCallback);
+        isScan = false;
     }
 
     @Override
@@ -106,6 +113,11 @@ public class BluetoothImpl implements Bluetooth {
     public void isBluetoothEnable() {
 
     }
+
+    @Override
+    public boolean isScan() {
+        return isScan;
+    }
 }
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -145,6 +157,8 @@ class ScanCallBack extends ScanCallback {
     @Override
     public void onScanFailed(int errorCode) {
         super.onScanFailed(errorCode);
+        Log.d(TAG, "onScanFailed " + errorCode);
+        //todo set isScan
     }
 }
 

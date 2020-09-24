@@ -53,4 +53,10 @@ interface Bluetooth {
      * 蓝牙是否打开
      */
     void isBluetoothEnable();
+
+    /**
+     * 是否是搜索状态
+     * @return
+     */
+    boolean isScan();
 }

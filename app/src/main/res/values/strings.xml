@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">LikeBluetooth</string>
+    <string name="scan">scan</string>
+    <string name="stopScan">stopScan</string>
 </resources>

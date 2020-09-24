@@ -16,15 +16,18 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.like.likebluetooth.view.BluetoothDevicesAdapter;
+import com.like.likebluetooth.view.IMainView;
 import com.like.likebluetooth.viewmodel.BluetoothViewModel;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements IMainView {
 
     public static final String TAG = "_bluetooth";
 
@@ -33,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothDevicesAdapter mBluetoothDevicesAdapter;
     private ArrayList<BluetoothDevice> mBluetoothDevices;
     private Bluetooth mBluetoothUtil;
+    private ExtendedFloatingActionButton optBtn;
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
@@ -40,7 +44,24 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        optBtn = findViewById(R.id.opt_float_btn);
+        optBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mBluetoothUtil.isScan()) {
+                    Log.d(TAG, "click stop scan");
+                    mBluetoothUtil.stopScan();
+                } else {
+                    Log.d(TAG, "click scan");
+                    mBluetoothUtil.scan();
+                }
+
+                scanStateChanged(mBluetoothUtil.isScan());
+            }
+        });
+
         text = findViewById(R.id.text);
+
         rv = findViewById(R.id.rv);
         rv.setLayoutManager(new LinearLayoutManager(this));
         mBluetoothDevices = new ArrayList<>();
@@ -84,12 +105,22 @@ public class MainActivity extends AppCompatActivity {
         });
 
         mBluetoothUtil = new BluetoothImpl(this, new LikeHandler(this), bluetoothModel);
-        mBluetoothUtil.scan();
+
 
     }
 
-    public void connectDevice(BluetoothDevice bluetoothDevice){
+    public void connectDevice(BluetoothDevice bluetoothDevice) {
         mBluetoothUtil.connectDevice(bluetoothDevice);
+    }
+
+    @Override
+    public void scanStateChanged(boolean isScan) {
+        optBtn.setText(isScan?R.string.stopScan:R.string.scan);
+        /*if (isScan) {
+            optBtn.extend();
+        } else {
+            optBtn.shrink();//收缩到只有icon的状态
+        }*/
     }
 
     private static class LikeHandler extends Handler {
