@@ -40,6 +40,11 @@ public class BluetoothDevicesAdapter extends RecyclerView.Adapter {
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, final int position) {
         ViewHolder vh = (ViewHolder) holder;
+
+        if (position == mList.size() - 1) {
+            appearAnimation(vh.itemView);
+        }
+
         BluetoothDevice bluetoothDevice = mList.get(position);
         if (bluetoothDevice.getName() != null) {
             vh.name.setText(bluetoothDevice.getName());
@@ -77,5 +82,10 @@ public class BluetoothDevicesAdapter extends RecyclerView.Adapter {
             name = itemView.findViewById(R.id.name);
             address = itemView.findViewById(R.id.address);
         }
+    }
+
+    private void appearAnimation(View v) {
+        v.setAlpha(0.f);
+        v.animate().alpha(1.f).setDuration(500).start();
     }
 }
