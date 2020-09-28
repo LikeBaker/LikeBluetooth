@@ -3,6 +3,8 @@ package com.like.likebluetooth;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.PopupMenu;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -11,15 +13,23 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.transition.TransitionManager;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.widget.TextView;
 
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.google.android.material.transition.platform.MaterialArcMotion;
+import com.google.android.material.transition.platform.MaterialContainerTransform;
+import com.google.android.material.transition.platform.MaterialFadeThrough;
 import com.like.likebluetooth.view.BluetoothDevicesAdapter;
 import com.like.likebluetooth.view.IMainView;
 import com.like.likebluetooth.viewmodel.BluetoothViewModel;
@@ -37,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements IMainView {
     private ArrayList<BluetoothDevice> mBluetoothDevices;
     private Bluetooth mBluetoothUtil;
     private ExtendedFloatingActionButton optBtn;
+    private TextView mTvTransform;
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
@@ -48,15 +59,19 @@ public class MainActivity extends AppCompatActivity implements IMainView {
         optBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mBluetoothUtil.isScan()) {
-                    Log.d(TAG, "click stop scan");
-                    mBluetoothUtil.stopScan();
-                } else {
-                    Log.d(TAG, "click scan");
-                    mBluetoothUtil.scan();
-                }
+//                if (mBluetoothUtil.isScan()) {
+//                    Log.d(TAG, "click stop scan");
+//                    mBluetoothUtil.stopScan();
+//                } else {
+//                    Log.d(TAG, "click scan");
+//                    mBluetoothUtil.scan();
+//                }
+//
+//                scanStateChanged(mBluetoothUtil.isScan());
 
-                scanStateChanged(mBluetoothUtil.isScan());
+                transform();
+
+//                showMenu(v);
             }
         });
 
@@ -123,6 +138,41 @@ public class MainActivity extends AppCompatActivity implements IMainView {
         }*/
     }
 
+    /**
+     * 初始化菜单 title右上角出现的按钮
+     */
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.like_menu, menu);
+        return true;
+    }
+
+    private void transform(){
+        ConstraintLayout container = findViewById(R.id.container);
+        mTvTransform = findViewById(R.id.view_transform_end);
+
+//        MaterialFadeThrough materialFadeThrough = new MaterialFadeThrough();
+        MaterialContainerTransform materialContainerTransform = new MaterialContainerTransform();
+        materialContainerTransform.setStartView(optBtn);
+        materialContainerTransform.setEndView(mTvTransform);
+        materialContainerTransform.addTarget(mTvTransform);
+        materialContainerTransform.setPathMotion(new MaterialArcMotion());
+//        materialContainerTransform.setScrimColor(Color.TRANSPARENT);
+
+
+        TransitionManager.beginDelayedTransition(container, materialContainerTransform);
+
+        optBtn.setVisibility(View.GONE);
+        mTvTransform.setVisibility(View.VISIBLE);
+    }
+
+    public void showMenu(View anchor) {
+        PopupMenu popup = new PopupMenu(this, anchor, Gravity.END);
+        popup.getMenuInflater().inflate(R.menu.like_menu, popup.getMenu());
+        popup.show();
+    }
+
     private static class LikeHandler extends Handler {
         WeakReference<MainActivity> mActivity;
 
@@ -148,4 +198,5 @@ public class MainActivity extends AppCompatActivity implements IMainView {
             }
         }
     }
+
 }

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:id="@+id/search"
+        android:icon="@drawable/scan"
+        android:title="search"
+        app:showAsAction="ifRoom" /><!-- ifRoom：如果界面有位置才显示，不然就出现在菜单按钮的三个点中-->
+    <item android:id="@+id/help"
+        android:icon="@drawable/scan"
+        android:title="help" />
+</menu>
