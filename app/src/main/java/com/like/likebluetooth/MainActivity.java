@@ -130,7 +130,7 @@ public class MainActivity extends AppCompatActivity implements IMainView {
 
     @Override
     public void scanStateChanged(boolean isScan) {
-        optBtn.setText(isScan?R.string.stopScan:R.string.scan);
+        optBtn.setText(isScan ? R.string.stopScan : R.string.scan);
         /*if (isScan) {
             optBtn.extend();
         } else {
@@ -148,7 +148,7 @@ public class MainActivity extends AppCompatActivity implements IMainView {
         return true;
     }
 
-    private void transform(){
+    private void transform() {
         ConstraintLayout container = findViewById(R.id.container);
         mTvTransform = findViewById(R.id.view_transform_end);
 
@@ -157,14 +157,15 @@ public class MainActivity extends AppCompatActivity implements IMainView {
         materialContainerTransform.setStartView(optBtn);
         materialContainerTransform.setEndView(mTvTransform);
         materialContainerTransform.addTarget(mTvTransform);
-        materialContainerTransform.setPathMotion(new MaterialArcMotion());
-//        materialContainerTransform.setScrimColor(Color.TRANSPARENT);
-
+//        materialContainerTransform.setPathMotion(new MaterialArcMotion());
+        materialContainerTransform.setDuration(5000);
+//        materialContainerTransform.setScrimColor(Color.YELLOW);
 
         TransitionManager.beginDelayedTransition(container, materialContainerTransform);
 
         optBtn.setVisibility(View.GONE);
         mTvTransform.setVisibility(View.VISIBLE);
+//        showMenu(optBtn);
     }
 
     public void showMenu(View anchor) {
