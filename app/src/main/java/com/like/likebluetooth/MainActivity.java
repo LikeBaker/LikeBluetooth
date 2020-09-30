@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
+import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -18,18 +19,19 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.transition.Transition;
+import android.transition.TransitionListenerAdapter;
 import android.transition.TransitionManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
-import com.google.android.material.transition.platform.MaterialArcMotion;
 import com.google.android.material.transition.platform.MaterialContainerTransform;
-import com.google.android.material.transition.platform.MaterialFadeThrough;
 import com.like.likebluetooth.view.BluetoothDevicesAdapter;
 import com.like.likebluetooth.view.IMainView;
 import com.like.likebluetooth.viewmodel.BluetoothViewModel;
@@ -42,12 +44,10 @@ public class MainActivity extends AppCompatActivity implements IMainView {
     public static final String TAG = "_bluetooth";
 
     protected TextView text;
-    private RecyclerView rv;
     private BluetoothDevicesAdapter mBluetoothDevicesAdapter;
     private ArrayList<BluetoothDevice> mBluetoothDevices;
     private Bluetooth mBluetoothUtil;
     private ExtendedFloatingActionButton optBtn;
-    private TextView mTvTransform;
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
@@ -69,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements IMainView {
 //
 //                scanStateChanged(mBluetoothUtil.isScan());
 
-                transform();
+                showScanPanel();
 
 //                showMenu(v);
             }
@@ -77,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements IMainView {
 
         text = findViewById(R.id.text);
 
-        rv = findViewById(R.id.rv);
+        RecyclerView rv = findViewById(R.id.rv);
         rv.setLayoutManager(new LinearLayoutManager(this));
         mBluetoothDevices = new ArrayList<>();
         mBluetoothDevicesAdapter = new BluetoothDevicesAdapter(this, mBluetoothDevices);
@@ -148,30 +148,73 @@ public class MainActivity extends AppCompatActivity implements IMainView {
         return true;
     }
 
-    private void transform() {
+    private void showScanPanel() {
         ConstraintLayout container = findViewById(R.id.container);
-        mTvTransform = findViewById(R.id.view_transform_end);
+        CardView mTvTransform = findViewById(R.id.view_transform_end);
 
 //        MaterialFadeThrough materialFadeThrough = new MaterialFadeThrough();
         MaterialContainerTransform materialContainerTransform = new MaterialContainerTransform();
         materialContainerTransform.setStartView(optBtn);
         materialContainerTransform.setEndView(mTvTransform);
         materialContainerTransform.addTarget(mTvTransform);
-//        materialContainerTransform.setPathMotion(new MaterialArcMotion());
-        materialContainerTransform.setDuration(5000);
-//        materialContainerTransform.setScrimColor(Color.YELLOW);
+        materialContainerTransform.setDuration(500);
+        materialContainerTransform.setScrimColor(Color.TRANSPARENT);
+        materialContainerTransform.setContainerColor(Color.TRANSPARENT);
 
+        materialContainerTransform.addListener(new TransitionListenerAdapter() {
+            @Override
+            public void onTransitionEnd(Transition transition) {
+                super.onTransitionEnd(transition);
+
+                optBtn.setVisibility(View.GONE);
+
+                Log.d(TAG, "scan");
+                mBluetoothUtil.scan();
+
+            }
+        });
         TransitionManager.beginDelayedTransition(container, materialContainerTransform);
 
-        optBtn.setVisibility(View.GONE);
         mTvTransform.setVisibility(View.VISIBLE);
 //        showMenu(optBtn);
+    }
+
+    private void closeScanPanel(){
+        ConstraintLayout container = findViewById(R.id.container);
+        CardView mTvTransform = findViewById(R.id.view_transform_end);
+
+//        MaterialFadeThrough materialFadeThrough = new MaterialFadeThrough();
+        MaterialContainerTransform materialContainerTransform = new MaterialContainerTransform();
+        materialContainerTransform.setStartView(mTvTransform);
+        materialContainerTransform.setEndView(optBtn);
+        materialContainerTransform.addTarget(optBtn);
+        materialContainerTransform.setDuration(500);
+        materialContainerTransform.setScrimColor(Color.TRANSPARENT);
+
+        materialContainerTransform.addListener(new TransitionListenerAdapter() {
+            @Override
+            public void onTransitionEnd(Transition transition) {
+                super.onTransitionEnd(transition);
+                Log.d(TAG, "onTransitionEnd");
+                Log.d(TAG, transition.getName());
+                Log.d(TAG, "transition.getDuration():" + transition.getDuration());
+
+                mTvTransform.setVisibility(View.GONE);
+                optBtn.setVisibility(View.VISIBLE);
+            }
+        });
+
+        TransitionManager.beginDelayedTransition(container, materialContainerTransform);
     }
 
     public void showMenu(View anchor) {
         PopupMenu popup = new PopupMenu(this, anchor, Gravity.END);
         popup.getMenuInflater().inflate(R.menu.like_menu, popup.getMenu());
         popup.show();
+    }
+
+    public void closeScanPanel(View view) {
+        closeScanPanel();
     }
 
     private static class LikeHandler extends Handler {
