@@ -12,13 +12,13 @@ import androidx.lifecycle.ViewModel;
  */
 
 public class BluetoothViewModel extends ViewModel {
-    private MutableLiveData<BluetoothDevice> braceletLiveData = new MutableLiveData<>();
+    private MutableLiveData<ScanListModel> braceletLiveData = new MutableLiveData<>();
     private MutableLiveData<BluetoothGatt> braceletGatt = new MutableLiveData<>();
 
     public BluetoothViewModel() {
     }
 
-    public MutableLiveData<BluetoothDevice> getBraceletLiveData() {
+    public MutableLiveData<ScanListModel> getBraceletLiveData() {
         return braceletLiveData;
     }
 

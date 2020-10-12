@@ -35,6 +35,7 @@ import com.google.android.material.transition.platform.MaterialContainerTransfor
 import com.like.likebluetooth.view.BluetoothDevicesAdapter;
 import com.like.likebluetooth.view.IMainView;
 import com.like.likebluetooth.viewmodel.BluetoothViewModel;
+import com.like.likebluetooth.viewmodel.ScanListModel;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ public class MainActivity extends AppCompatActivity implements IMainView {
 
     protected TextView text;
     private BluetoothDevicesAdapter mBluetoothDevicesAdapter;
-    private ArrayList<BluetoothDevice> mBluetoothDevices;
+    private ArrayList<ScanListModel> mBluetoothDevices;
     private Bluetooth mBluetoothUtil;
     private ExtendedFloatingActionButton optBtn;
 
@@ -87,27 +88,24 @@ public class MainActivity extends AppCompatActivity implements IMainView {
         ViewModelProvider.AndroidViewModelFactory androidViewModelFactory = new ViewModelProvider.AndroidViewModelFactory(getApplication());
         BluetoothViewModel bluetoothModel = androidViewModelFactory.create(BluetoothViewModel.class);
 //        bluetoothModel.getBraceletLiveData().setValue();
-        bluetoothModel.getBraceletLiveData().observe(this, new Observer<BluetoothDevice>() {
-            @Override
-            public void onChanged(BluetoothDevice bluetoothDevice) {
-                //新增的bluetoothDevice
-                if (bluetoothDevice.getName() != null) {
-                    String msg = bluetoothDevice.getAddress() + " " + bluetoothDevice.getName();
-                    Log.d("MainActivity", msg);
-                    text.setText(msg);
+        bluetoothModel.getBraceletLiveData().observe(this, scanListModel -> {
+            //新增的bluetoothDevice
+            if (scanListModel.getBluetoothDevice().getName() != null) {
+                String msg = scanListModel.getBluetoothDevice().getAddress() + " " + scanListModel.getBluetoothDevice().getName();
+                Log.d("MainActivity", msg);
+                text.setText(msg);
 
-                } else {
-                    Log.d("MainActivity", bluetoothDevice.getAddress());
-                    text.setText(bluetoothDevice.getAddress());
-                }
+            } else {
+                Log.d("MainActivity", scanListModel.getBluetoothDevice().getAddress());
+                text.setText(scanListModel.getBluetoothDevice().getAddress());
+            }
 
-                if (!mBluetoothDevices.contains(bluetoothDevice)) {
+            if (!mBluetoothDevices.contains(scanListModel)) {
 
-                    mBluetoothDevices.add(bluetoothDevice);
-                    mBluetoothDevicesAdapter.notifyDataSetChanged();
-                } else {
-                    Log.d("MainActivity", "already have");
-                }
+                mBluetoothDevices.add(scanListModel);
+                mBluetoothDevicesAdapter.notifyDataSetChanged();
+            } else {
+                Log.d("MainActivity", "already have");
             }
         });
 

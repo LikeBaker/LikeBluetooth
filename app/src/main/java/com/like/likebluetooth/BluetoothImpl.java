@@ -17,6 +17,7 @@ import android.util.Log;
 import androidx.annotation.RequiresApi;
 
 import com.like.likebluetooth.viewmodel.BluetoothViewModel;
+import com.like.likebluetooth.viewmodel.ScanListModel;
 
 import java.util.List;
 
@@ -140,6 +141,10 @@ class ScanCallBack extends ScanCallback {
         super.onScanResult(callbackType, result);
 
         BluetoothDevice device = result.getDevice();
+        int rssi = result.getRssi();
+
+        ScanListModel scanListModel = new ScanListModel(device, rssi+"");
+
         if (device!=null){
 
             //handler 方式
@@ -150,7 +155,7 @@ class ScanCallBack extends ScanCallback {
 //            mHandler.sendMessage(message);
 
             //ViewModel 方式
-            mViewModel.getBraceletLiveData().setValue(device);
+            mViewModel.getBraceletLiveData().setValue(scanListModel);
         }
     }
 

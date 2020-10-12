@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.like.likebluetooth.MainActivity;
 import com.like.likebluetooth.R;
 import com.like.likebluetooth.info.BluetoothDeviceInfoActivity;
+import com.like.likebluetooth.viewmodel.ScanListModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,9 +24,9 @@ import java.util.List;
 
 public class BluetoothDevicesAdapter extends RecyclerView.Adapter {
     private final MainActivity mActivity;
-    private final List<BluetoothDevice> mList;
+    private final List<ScanListModel> mList;
 
-    public BluetoothDevicesAdapter(MainActivity mainActivity, ArrayList<BluetoothDevice> bluetoothDevices) {
+    public BluetoothDevicesAdapter(MainActivity mainActivity, ArrayList<ScanListModel> bluetoothDevices) {
         this.mActivity = mainActivity;
         this.mList = bluetoothDevices;
     }
@@ -45,7 +46,10 @@ public class BluetoothDevicesAdapter extends RecyclerView.Adapter {
             appearAnimation(vh.itemView);
         }
 
-        BluetoothDevice bluetoothDevice = mList.get(position);
+        ScanListModel scanListModel = mList.get(position);
+        BluetoothDevice bluetoothDevice = scanListModel.getBluetoothDevice();
+        if (bluetoothDevice == null) return;
+
         if (bluetoothDevice.getName() != null) {
             vh.name.setText(bluetoothDevice.getName());
         } else {
@@ -53,13 +57,11 @@ public class BluetoothDevicesAdapter extends RecyclerView.Adapter {
         }
 
         vh.address.setText(bluetoothDevice.getAddress());
+        vh.rssi.setText(scanListModel.getRssi());
 
-        vh.name.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mActivity.connectDevice(mList.get(position));
-                mActivity.startActivity(new Intent(mActivity, BluetoothDeviceInfoActivity.class));
-            }
+        vh.name.setOnClickListener(v -> {
+            mActivity.connectDevice(bluetoothDevice);
+            mActivity.startActivity(new Intent(mActivity, BluetoothDeviceInfoActivity.class));
         });
     }
 
@@ -74,13 +76,14 @@ public class BluetoothDevicesAdapter extends RecyclerView.Adapter {
 
     private static class ViewHolder extends RecyclerView.ViewHolder {
 
-        TextView name, address;
+        TextView name, address, rssi;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
 
             name = itemView.findViewById(R.id.name);
             address = itemView.findViewById(R.id.address);
+            rssi = itemView.findViewById(R.id.tv_rssi);
         }
     }
 
