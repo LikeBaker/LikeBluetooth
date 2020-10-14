@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -61,7 +62,7 @@ public class BluetoothDevicesAdapter extends RecyclerView.Adapter {
 
         vh.name.setOnClickListener(v -> {
             mActivity.connectDevice(bluetoothDevice);
-            mActivity.startActivity(new Intent(mActivity, BluetoothDeviceInfoActivity.class));
+//            mActivity.startActivity(new Intent(mActivity, BluetoothDeviceInfoActivity.class));
         });
     }
 
@@ -76,7 +77,8 @@ public class BluetoothDevicesAdapter extends RecyclerView.Adapter {
 
     private static class ViewHolder extends RecyclerView.ViewHolder {
 
-        TextView name, address, rssi;
+        Button name;
+        TextView address, rssi;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);

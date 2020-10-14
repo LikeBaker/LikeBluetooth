@@ -22,6 +22,8 @@ import com.like.likebluetooth.viewmodel.ScanListModel;
 import java.util.List;
 
 import static android.bluetooth.BluetoothProfile.STATE_CONNECTED;
+import static android.telecom.Connection.STATE_DISCONNECTED;
+import static android.telecom.Connection.STATE_INITIALIZING;
 import static com.like.likebluetooth.MainActivity.TAG;
 
 /**
@@ -57,6 +59,11 @@ public class BluetoothImpl implements Bluetooth {
     public void scan() {
         if (mScanCallback == null) {
             mScanCallback = new ScanCallBack(mDataHandler, mBluetoothDeviceModel);
+        }
+
+        if (mBluetoothLeScanner == null) {
+            Log.w(TAG, "蓝牙未开启");
+            return;
         }
 
         mBluetoothLeScanner.startScan(mScanCallback);
@@ -141,6 +148,8 @@ class ScanCallBack extends ScanCallback {
         super.onScanResult(callbackType, result);
 
         BluetoothDevice device = result.getDevice();
+        if (device.getName() == null) return;
+
         int rssi = result.getRssi();
 
         ScanListModel scanListModel = new ScanListModel(device, rssi+"");
@@ -178,10 +187,17 @@ class BluetoothGattCallBack extends BluetoothGattCallback {
     public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
         super.onConnectionStateChange(gatt, status, newState);
 
-        Log.d("BluetoothGattCallBack", "onConnectionStateChange");
+        Log.d(TAG, "onConnectionStateChange");
 
         if (newState == STATE_CONNECTED) {
             gatt.discoverServices();
+        } else if (newState == STATE_DISCONNECTED) {
+            Log.w(TAG, "连接失败或断开连接");
+        } else if (newState == STATE_INITIALIZING) {
+            Log.w(TAG, "connect is initializing");
+        }
+        else {
+            Log.d(TAG, "new state " + newState);
         }
     }
 
@@ -189,7 +205,7 @@ class BluetoothGattCallBack extends BluetoothGattCallback {
     public void onServicesDiscovered(BluetoothGatt gatt, int status) {
         super.onServicesDiscovered(gatt, status);
 
-        Log.d("BluetoothGattCallBack", "onServicesDiscovered");
+        Log.d(TAG, "onServicesDiscovered");
 
 //        List<BluetoothGattService> services = gatt.getServices();
 //            mBluetoothDeviceModel.getBraceletGatt().setValue(gatt);//报错Cannot invoke setValue on a background thread

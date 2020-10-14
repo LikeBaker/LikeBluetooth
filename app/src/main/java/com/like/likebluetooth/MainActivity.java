@@ -27,7 +27,6 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
@@ -46,7 +45,7 @@ public class MainActivity extends AppCompatActivity implements IMainView {
 
     protected TextView text;
     private BluetoothDevicesAdapter mBluetoothDevicesAdapter;
-    private ArrayList<ScanListModel> mBluetoothDevices;
+    private ArrayList<ScanListModel> mScanListModel;
     private Bluetooth mBluetoothUtil;
     private ExtendedFloatingActionButton optBtn;
 
@@ -80,8 +79,8 @@ public class MainActivity extends AppCompatActivity implements IMainView {
 
         RecyclerView rv = findViewById(R.id.rv);
         rv.setLayoutManager(new LinearLayoutManager(this));
-        mBluetoothDevices = new ArrayList<>();
-        mBluetoothDevicesAdapter = new BluetoothDevicesAdapter(this, mBluetoothDevices);
+        mScanListModel = new ArrayList<>();
+        mBluetoothDevicesAdapter = new BluetoothDevicesAdapter(this, mScanListModel);
         rv.setAdapter(mBluetoothDevicesAdapter);
 
         //创建ViewModel
@@ -93,28 +92,41 @@ public class MainActivity extends AppCompatActivity implements IMainView {
             if (scanListModel.getBluetoothDevice().getName() != null) {
                 String msg = scanListModel.getBluetoothDevice().getAddress() + " " + scanListModel.getBluetoothDevice().getName();
                 Log.d("MainActivity", msg);
-                text.setText(msg);
+//                text.setText(msg);
 
             } else {
                 Log.d("MainActivity", scanListModel.getBluetoothDevice().getAddress());
-                text.setText(scanListModel.getBluetoothDevice().getAddress());
+//                text.setText(scanListModel.getBluetoothDevice().getAddress());
             }
 
-            if (!mBluetoothDevices.contains(scanListModel)) {
-
-                mBluetoothDevices.add(scanListModel);
-                mBluetoothDevicesAdapter.notifyDataSetChanged();
-            } else {
-                Log.d("MainActivity", "already have");
+            //判断数据是否重复
+            for (ScanListModel model: mScanListModel){
+                BluetoothDevice bluetoothDevice = model.getBluetoothDevice();
+                if (scanListModel.getBluetoothDevice().getAddress().equals(bluetoothDevice.getAddress()))
+                    return;
             }
+//            if (!mBluetoothDevices.contains(scanListModel)) {
+//
+            mScanListModel.add(scanListModel);
+            mBluetoothDevicesAdapter.notifyDataSetChanged();
+//            } else {
+//                Log.d("MainActivity", "already have");
+//            }
         });
 
         MutableLiveData<BluetoothGatt> braceletGatt = bluetoothModel.getBraceletGatt();
-        braceletGatt.observe(this, new Observer<BluetoothGatt>() {
-            @Override
-            public void onChanged(BluetoothGatt bluetoothGatt) {
-                Log.d(TAG, "gatt changes");
+        braceletGatt.observe(this, bluetoothGatt -> {
+            Log.d(TAG, "gatt changes");
+
+            //连接手环，并且触发server discover
+            BluetoothDevice device = bluetoothGatt.getDevice();
+            Log.d(TAG, device.getName());
+            if (device.getName() != null) {
+                text.setText(device.getName());
+                mBluetoothUtil.stopScan();
+                closeScanPanel();
             }
+
         });
 
         mBluetoothUtil = new BluetoothImpl(this, new LikeHandler(this), bluetoothModel);
@@ -177,7 +189,7 @@ public class MainActivity extends AppCompatActivity implements IMainView {
 //        showMenu(optBtn);
     }
 
-    private void closeScanPanel(){
+    public void closeScanPanel(){
         ConstraintLayout container = findViewById(R.id.container);
         CardView mTvTransform = findViewById(R.id.view_transform_end);
 
@@ -212,6 +224,7 @@ public class MainActivity extends AppCompatActivity implements IMainView {
     }
 
     public void closeScanPanel(View view) {
+        mBluetoothUtil.stopScan();
         closeScanPanel();
     }
 
