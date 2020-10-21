@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattService;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -31,13 +32,16 @@ import android.widget.TextView;
 
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.transition.platform.MaterialContainerTransform;
+import com.like.likebluetooth.model.ServicesModel;
 import com.like.likebluetooth.view.BluetoothDevicesAdapter;
+import com.like.likebluetooth.view.BluetoothServiceAdapter;
 import com.like.likebluetooth.view.IMainView;
 import com.like.likebluetooth.viewmodel.BluetoothViewModel;
 import com.like.likebluetooth.viewmodel.ScanListModel;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements IMainView {
 
@@ -48,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements IMainView {
     private ArrayList<ScanListModel> mScanListModel;
     private Bluetooth mBluetoothUtil;
     private ExtendedFloatingActionButton optBtn;
+    private RecyclerView rvList;
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
@@ -56,9 +61,7 @@ public class MainActivity extends AppCompatActivity implements IMainView {
         setContentView(R.layout.activity_main);
 
         optBtn = findViewById(R.id.opt_float_btn);
-        optBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        optBtn.setOnClickListener(v -> {
 //                if (mBluetoothUtil.isScan()) {
 //                    Log.d(TAG, "click stop scan");
 //                    mBluetoothUtil.stopScan();
@@ -69,10 +72,9 @@ public class MainActivity extends AppCompatActivity implements IMainView {
 //
 //                scanStateChanged(mBluetoothUtil.isScan());
 
-                showScanPanel();
+            showScanPanel();
 
 //                showMenu(v);
-            }
         });
 
         text = findViewById(R.id.text);
@@ -125,12 +127,18 @@ public class MainActivity extends AppCompatActivity implements IMainView {
                 text.setText(device.getName());
                 mBluetoothUtil.stopScan();
                 closeScanPanel();
+
+                List<BluetoothGattService> services = bluetoothGatt.getServices();
+                for (BluetoothGattService service : services) {
+                    Log.d(TAG, "service.getUuid():" + service.getUuid());
+                }
+
+                renderBluetoothService(bluetoothGatt);
             }
 
         });
 
         mBluetoothUtil = new BluetoothImpl(this, new LikeHandler(this), bluetoothModel);
-
 
     }
 
@@ -254,4 +262,21 @@ public class MainActivity extends AppCompatActivity implements IMainView {
         }
     }
 
+    private void renderBluetoothService(BluetoothGatt bluetoothGatt){
+        if (rvList == null) {
+            rvList = findViewById(R.id.service_list);
+        }
+
+        rvList.setLayoutManager(new LinearLayoutManager(this));
+
+        List<ServicesModel> list = new ArrayList<>();
+        for (BluetoothGattService service : bluetoothGatt.getServices()){
+            ServicesModel model = new ServicesModel(service);
+            list.add(model);
+        }
+
+        rvList.setAdapter(new BluetoothServiceAdapter(MainActivity.this, list));
+
+
+    }
 }
