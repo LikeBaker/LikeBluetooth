@@ -28,7 +28,7 @@ import static com.like.likebluetooth.MainActivity.TAG;
  * Created by liuzhen on 2020/10/19.
  */
 
-public class BluetoothServiceAdapter extends Adapter<RecyclerView.ViewHolder> {
+public class BluetoothServiceAdapter extends Adapter<RecyclerView.ViewHolder>{
 
     private static final int SERVICE = 0;
     private static final int CHARACTERISTIC = 1;
@@ -61,13 +61,14 @@ public class BluetoothServiceAdapter extends Adapter<RecyclerView.ViewHolder> {
             servicePos.add(mCount);
             mCount += model.getmCharacteristics().size() + 1;
             contents.add(model.getService().getUuid().toString());
-            for(BluetoothGattCharacteristic characteristic : model.getmCharacteristics()) {
+            for (BluetoothGattCharacteristic characteristic : model.getmCharacteristics()) {
                 Log.d(TAG, "characteristic " + characteristic.getUuid().toString());
                 contents.add(characteristic.getUuid().toString());
-
-
             }
         }
+
+        Log.d(TAG, "初始化的servicePos " + servicePos);
+        Log.d(TAG, "初始化的contents长度 " + contents.size());
     }
 
     @NonNull
@@ -93,8 +94,62 @@ public class BluetoothServiceAdapter extends Adapter<RecyclerView.ViewHolder> {
 
             serviceViewHolder.rootView.setOnClickListener(v -> {
 
-                ServicesModel model = mData.get(servicePos.indexOf(position));
+                Log.d(TAG, "点击的position " + position);
+
+                int servicePosChangedPos = servicePos.indexOf(position);
+
+                if (servicePosChangedPos == -1){
+                    try {
+                        throw new Exception("servicePos is invalid " + position);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        Log.e(TAG, e.toString());
+                        return;
+                    }
+                }
+
+                ServicesModel model = mData.get(servicePosChangedPos);
                 Log.d(TAG, model.getService().getUuid().toString());
+                model.setExpanded(!model.isExpanded());
+
+                serviceViewHolder.imgArrow.setImageResource(
+                        model.isExpanded() ? R.drawable.ic_keyboard_arrow_up_black_18dp : R.drawable.ic_keyboard_arrow_down_black_18dp);
+
+                if (model.isExpanded()) {
+//                    notifyItemInserted();
+                } else {
+
+                    int removeItemCount = 0;
+                    List<BluetoothGattCharacteristic> bluetoothGattCharacteristics = model.getmCharacteristics();
+                    if (bluetoothGattCharacteristics != null && bluetoothGattCharacteristics.size() > 0) {
+                        removeItemCount = bluetoothGattCharacteristics.size();
+                        Log.d(TAG, "需要删除的characteristic数量 " + removeItemCount);
+                    }
+
+                    ArrayList<String> removeContents = new ArrayList<>();
+                    for (int i = position+1; i < position+1+removeItemCount; i++) {
+                        removeContents.add(contents.get(i));
+                    }
+
+                    for (int i=servicePosChangedPos + 1; i<servicePos.size(); i++) {
+                        int pos = servicePos.get(i);
+                        pos -= removeItemCount;
+                        servicePos.set(i, pos);
+                    }
+
+                    Log.d(TAG, "调整后的servicePos " + servicePos);
+//                    for ( int  i = 0 ;i < servicePos.size();i++){
+//                        System.out.println(servicePos.get(i) + ' ');
+//                    }
+
+                    System.out.println('\n');
+
+                    contents.removeAll(removeContents);
+                    mCount -= removeContents.size();
+                    Log.d(TAG, "调整后的content长度 " + contents.size());
+                    notifyItemRangeRemoved(position, removeItemCount);
+                    notifyItemRangeChanged(position, contents.size()-(position+1));
+                }
             });
 
         } else {
@@ -106,11 +161,14 @@ public class BluetoothServiceAdapter extends Adapter<RecyclerView.ViewHolder> {
     @Override
     public int getItemCount() {
         // TODO: 2020/10/21 要运行多少遍 ？
+        Log.d(TAG, "getItemCount " + mCount);
         return mCount;
     }
 
     @Override
     public int getItemViewType(int position) {
+
+        Log.d(TAG, "getItemViewType");
 
         if (servicePos.contains(position)) {
             return SERVICE;
