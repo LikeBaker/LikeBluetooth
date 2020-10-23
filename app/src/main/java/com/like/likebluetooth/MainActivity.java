@@ -10,6 +10,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SimpleItemAnimator;
 
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -275,7 +276,8 @@ public class MainActivity extends AppCompatActivity implements IMainView {
         }
 
         rvList.setAdapter(new BluetoothServiceAdapter(MainActivity.this, list));
-
+        //用于消除闪烁
+//        ((SimpleItemAnimator)rvList.getItemAnimator()).setSupportsChangeAnimations(false);
 
     }
 }

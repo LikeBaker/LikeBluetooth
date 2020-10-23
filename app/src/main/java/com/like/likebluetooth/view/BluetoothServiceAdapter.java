@@ -168,8 +168,8 @@ public class BluetoothServiceAdapter extends Adapter<RecyclerView.ViewHolder>{
 
                     mCount -= removeContents.size();
 //                    Log.d(TAG, "调整后的content长度 " + contents.size());
-                    notifyItemRangeRemoved(position, removeItemCount);
-                    notifyItemRangeChanged(position, contents.size()-(position+1));
+                    notifyItemRangeRemoved(position+1, removeItemCount);
+                    notifyItemRangeChanged(position+1, contents.size()-(position+1));
                 }
             });
 
