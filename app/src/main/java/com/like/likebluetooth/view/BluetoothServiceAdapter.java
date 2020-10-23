@@ -115,27 +115,27 @@ public class BluetoothServiceAdapter extends Adapter<RecyclerView.ViewHolder>{
                         model.isExpanded() ? R.drawable.ic_keyboard_arrow_up_black_18dp : R.drawable.ic_keyboard_arrow_down_black_18dp);
 
                 if (model.isExpanded()) {
-//                    List<BluetoothGattCharacteristic> insertCharacteristics = model.getmCharacteristics();
-//                    int insertItemSize = insertCharacteristics.size();
-//                    notifyItemRangeInserted(position, insertItemSize);
-//
-//                    ArrayList<String> insertCharacteristicList = new ArrayList<>();
-//                    for (int i=0; i<insertCharacteristics.size(); i++) {
-//                        insertCharacteristicList.add(insertCharacteristics.get(i).getUuid().toString());
-//                    }
-//
-//                    contents.addAll(position, insertCharacteristicList);
-//
-//                    for (int i=servicePosChangedPos + 1; i<servicePos.size(); i++) {
-//                        int pos = servicePos.get(i);
-//                        pos += insertItemSize;
-//                        servicePos.set(i, pos);
-//                    }
-//
-//                    mCount += insertItemSize;
-//
-//                    notifyItemRangeInserted(position, insertItemSize);
-//                    notifyItemRangeChanged(position, contents.size()-(position+1));
+                    List<BluetoothGattCharacteristic> insertCharacteristics = model.getmCharacteristics();
+                    int insertItemSize = insertCharacteristics.size();
+
+                    ArrayList<String> insertCharacteristicList = new ArrayList<>();
+                    for (int i=0; i<insertCharacteristics.size(); i++) {
+                        insertCharacteristicList.add(insertCharacteristics.get(i).getUuid().toString());
+                    }
+
+                    //在position后一位插入，不要覆盖service id
+                    contents.addAll(position+1, insertCharacteristicList);
+
+                    for (int i=servicePosChangedPos + 1; i<servicePos.size(); i++) {
+                        int pos = servicePos.get(i);
+                        pos += insertItemSize;
+                        servicePos.set(i, pos);
+                    }
+
+                    mCount += insertItemSize;
+
+                    notifyItemRangeInserted(position+1, insertItemSize);
+                    notifyItemRangeChanged(position+1, contents.size()-(position+1));
 
                 } else {
 
