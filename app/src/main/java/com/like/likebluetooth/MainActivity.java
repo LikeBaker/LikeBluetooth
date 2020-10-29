@@ -279,5 +279,6 @@ public class MainActivity extends AppCompatActivity implements IMainView {
         //用于消除闪烁
 //        ((SimpleItemAnimator)rvList.getItemAnimator()).setSupportsChangeAnimations(false);
 
+//        rvList.getItemAnimator().setChangeDuration(3000);
     }
 }

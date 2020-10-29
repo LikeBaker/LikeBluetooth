@@ -1,6 +1,7 @@
 package com.like.likebluetooth.view;
 
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,7 +21,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static com.like.likebluetooth.MainActivity.TAG;
 
@@ -28,7 +28,7 @@ import static com.like.likebluetooth.MainActivity.TAG;
  * Created by liuzhen on 2020/10/19.
  */
 
-public class BluetoothServiceAdapter extends Adapter<RecyclerView.ViewHolder>{
+public class BluetoothServiceAdapter extends Adapter<RecyclerView.ViewHolder> {
 
     private static final int SERVICE = 0;
     private static final int CHARACTERISTIC = 1;
@@ -37,11 +37,14 @@ public class BluetoothServiceAdapter extends Adapter<RecyclerView.ViewHolder>{
     private final List<ServicesModel> mData;
     private Map<String, List<BluetoothGattCharacteristic>> bluetoothItems;
 
+    // TODO: 2020/10/28 如何通过点击是哪个service、characteristic
+
     //记录title位置
     private List<Integer> servicePos;
     //按顺序记录位置
     private List<String> contents;
     private int mCount;
+    private final HashMap<Integer, Object> mGuidePost;
 
     public BluetoothServiceAdapter(MainActivity mainActivity, List<ServicesModel> services) {
         this.mActivity = mainActivity;
@@ -54,13 +57,13 @@ public class BluetoothServiceAdapter extends Adapter<RecyclerView.ViewHolder>{
         mCount = 0;
         servicePos = new ArrayList<>();
         for (ServicesModel model : services) {
-            bluetoothItems.put(model.getService().getUuid().toString(), model.getmCharacteristics());
+            bluetoothItems.put(model.getService().getUuid().toString(), model.getCharacteristics());
 
 //            Log.d(TAG, "service " + model.getService().getUuid().toString());
             servicePos.add(mCount);
-            mCount += model.getmCharacteristics().size() + 1;
+            mCount += model.getCharacteristics().size() + 1;
             contents.add(model.getService().getUuid().toString());
-            for (BluetoothGattCharacteristic characteristic : model.getmCharacteristics()) {
+            for (BluetoothGattCharacteristic characteristic : model.getCharacteristics()) {
 //                Log.d(TAG, "characteristic " + characteristic.getUuid().toString());
                 contents.add(characteristic.getUuid().toString());
             }
@@ -68,6 +71,8 @@ public class BluetoothServiceAdapter extends Adapter<RecyclerView.ViewHolder>{
 
 //        Log.d(TAG, "初始化的servicePos " + servicePos);
 //        Log.d(TAG, "初始化的contents长度 " + contents.size());
+
+        mGuidePost = getGuidePost(mData);
     }
 
     @NonNull
@@ -91,13 +96,18 @@ public class BluetoothServiceAdapter extends Adapter<RecyclerView.ViewHolder>{
             ServiceViewHolder serviceViewHolder = (ServiceViewHolder) holder;
             serviceViewHolder.service.setText(contents.get(position));
 
+            int servicePosChangedPos = servicePos.indexOf(position);
+            ServicesModel model = mData.get(servicePosChangedPos);
+            serviceViewHolder.imgArrow.setImageResource(
+                    model.isExpanded() ? R.drawable.ic_keyboard_arrow_up_black_18dp : R.drawable.ic_keyboard_arrow_down_black_18dp);
+
             serviceViewHolder.rootView.setOnClickListener(v -> {
 
 //                Log.d(TAG, "点击的position " + position);
 
-                int servicePosChangedPos = servicePos.indexOf(position);
+//                int servicePosChangedPos = servicePos.indexOf(position);
 
-                if (servicePosChangedPos == -1){
+                if (servicePosChangedPos == -1) {
                     try {
                         throw new Exception("servicePos is invalid " + position);
                     } catch (Exception e) {
@@ -107,7 +117,7 @@ public class BluetoothServiceAdapter extends Adapter<RecyclerView.ViewHolder>{
                     }
                 }
 
-                ServicesModel model = mData.get(servicePosChangedPos);
+//                ServicesModel model = mData.get(servicePosChangedPos);
 //                Log.d(TAG, model.getService().getUuid().toString());
                 model.setExpanded(!model.isExpanded());
 
@@ -115,18 +125,18 @@ public class BluetoothServiceAdapter extends Adapter<RecyclerView.ViewHolder>{
                         model.isExpanded() ? R.drawable.ic_keyboard_arrow_up_black_18dp : R.drawable.ic_keyboard_arrow_down_black_18dp);
 
                 if (model.isExpanded()) {
-                    List<BluetoothGattCharacteristic> insertCharacteristics = model.getmCharacteristics();
+                    List<BluetoothGattCharacteristic> insertCharacteristics = model.getCharacteristics();
                     int insertItemSize = insertCharacteristics.size();
 
                     ArrayList<String> insertCharacteristicList = new ArrayList<>();
-                    for (int i=0; i<insertCharacteristics.size(); i++) {
+                    for (int i = 0; i < insertCharacteristics.size(); i++) {
                         insertCharacteristicList.add(insertCharacteristics.get(i).getUuid().toString());
                     }
 
                     //在position后一位插入，不要覆盖service id
-                    contents.addAll(position+1, insertCharacteristicList);
+                    contents.addAll(position + 1, insertCharacteristicList);
 
-                    for (int i=servicePosChangedPos + 1; i<servicePos.size(); i++) {
+                    for (int i = servicePosChangedPos + 1; i < servicePos.size(); i++) {
                         int pos = servicePos.get(i);
                         pos += insertItemSize;
                         servicePos.set(i, pos);
@@ -134,26 +144,26 @@ public class BluetoothServiceAdapter extends Adapter<RecyclerView.ViewHolder>{
 
                     mCount += insertItemSize;
 
-                    notifyItemRangeInserted(position+1, insertItemSize);
-                    notifyItemRangeChanged(position+1, contents.size()-(position+1));
+                    notifyItemRangeInserted(position + 1, insertItemSize);
+                    notifyItemRangeChanged(position + 1, contents.size() - (position + 1));
 
                 } else {
 
                     int removeItemCount = 0;
-                    List<BluetoothGattCharacteristic> bluetoothGattCharacteristics = model.getmCharacteristics();
+                    List<BluetoothGattCharacteristic> bluetoothGattCharacteristics = model.getCharacteristics();
                     if (bluetoothGattCharacteristics != null && bluetoothGattCharacteristics.size() > 0) {
                         removeItemCount = bluetoothGattCharacteristics.size();
 //                        Log.d(TAG, "需要删除的characteristic数量 " + removeItemCount);
                     }
 
                     ArrayList<String> removeContents = new ArrayList<>();
-                    for (int i = position+1; i < position+1+removeItemCount; i++) {
+                    for (int i = position + 1; i < position + 1 + removeItemCount; i++) {
                         removeContents.add(contents.get(i));
                     }
 
                     contents.removeAll(removeContents);
 
-                    for (int i=servicePosChangedPos + 1; i<servicePos.size(); i++) {
+                    for (int i = servicePosChangedPos + 1; i < servicePos.size(); i++) {
                         int pos = servicePos.get(i);
                         pos -= removeItemCount;
                         servicePos.set(i, pos);
@@ -166,16 +176,34 @@ public class BluetoothServiceAdapter extends Adapter<RecyclerView.ViewHolder>{
 
 //                    System.out.println('\n');
 
+                    Object o = mGuidePost.get(position);
+                    if (o instanceof BluetoothGattService) {
+                        Log.d(TAG, "service");
+                        BluetoothGattService service = (BluetoothGattService)o;
+                        Log.d(TAG, service.getUuid().toString());
+                    } else if (o instanceof BluetoothGattCharacteristic) {
+                        Log.d(TAG, "characteristic");
+                        BluetoothGattCharacteristic characteristic = (BluetoothGattCharacteristic) o;
+                        Log.d(TAG, characteristic.getUuid().toString());
+                    } else {
+                        Log.d(TAG, "here1");
+                    }
+
+
                     mCount -= removeContents.size();
 //                    Log.d(TAG, "调整后的content长度 " + contents.size());
-                    notifyItemRangeRemoved(position+1, removeItemCount);
-                    notifyItemRangeChanged(position+1, contents.size()-(position+1));
+                    notifyItemRangeRemoved(position + 1, removeItemCount);
+                    notifyItemRangeChanged(position + 1, contents.size() - (position + 1));
                 }
+
+
             });
 
         } else {
             CharacteristicViewHolder characteristicViewHolder = (CharacteristicViewHolder) holder;
             characteristicViewHolder.characteristic.setText(contents.get(position));
+
+//            characteristicViewHolder.characteristicInfo.setText(mData.get);
         }
     }
 
@@ -216,12 +244,38 @@ public class BluetoothServiceAdapter extends Adapter<RecyclerView.ViewHolder>{
 
     static class CharacteristicViewHolder extends RecyclerView.ViewHolder {
 
-        TextView characteristic;
+        TextView characteristic, characteristicInfo;
 
         public CharacteristicViewHolder(@NonNull View itemView) {
             super(itemView);
 
             characteristic = itemView.findViewById(R.id.tv_characteristic);
+            characteristicInfo = itemView.findViewById(R.id.tv_characteristic_info);
         }
+    }
+
+    /**
+     * @return 一个map，key为recyclerview点击位置，value为对应的service或characteristic
+     *
+     * todo 点击service展开/闭合后，position会发生变化
+     */
+    private HashMap<Integer, Object> getGuidePost(List<ServicesModel> models) {
+        HashMap<Integer, Object> guidePost = new HashMap<>();
+
+        int count = 0;
+        for (ServicesModel model : models) {
+            if (model.getService() != null) {
+                count++;
+                guidePost.put(count, model.getService());
+                if (model.getCharacteristics() != null) {
+                    for (int i=0; i<model.getCharacteristics().size(); i++) {
+                        count++;
+                        guidePost.put(count, model.getCharacteristics().get(i));
+                    }
+                }
+            }
+        }
+
+        return guidePost;
     }
 }

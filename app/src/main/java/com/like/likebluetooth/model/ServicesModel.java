@@ -37,7 +37,7 @@ public class ServicesModel {
         this.mService = mService;
     }
 
-    public List<BluetoothGattCharacteristic> getmCharacteristics() {
+    public List<BluetoothGattCharacteristic> getCharacteristics() {
         return mCharacteristics;
     }
 
